@@ -77,7 +77,11 @@ contract Vault is IVault, Ownable {
     // event PayTax(address _account, bytes32 _key, uint256 profit, uint256 usdTax);
     // event UpdateGlobalSize(address _indexToken, uint256 tokenSize, uint256 globalSize, uint256 averagePrice, bool _increase, bool _isLong );
     event CollectPremiumFee(address account,uint256 _size, int256 _entryPremiumRate, int256 _premiumFeeUSD);
-    
+    event SetManager(address account, bool state);
+    event SetRouter(address account, bool state);
+    event SetTokenConfig(address _token, uint256 _tokenWeight, bool _isStable, bool _isFundingToken, bool _isTradingToken);
+    event ClearTokenConfig(address _token, bool del);
+
     constructor(uint8 _baseMode) {
         baseMode = _baseMode;
     }
@@ -95,10 +99,12 @@ contract Vault is IVault, Ownable {
 
     function setManager(address _manager, bool _isManager) external override onlyOwner{
         isManager[_manager] = _isManager;
+        emit SetManager(_manager, _isManager);
     }
 
     function setRouter(address _router, bool _status) external override onlyOwner{
         approvedRouters[_router] = _status;
+        emit SetRouter(_router, _status);
     }
 
     function setTokenConfig(address _token, uint256 _tokenWeight, bool _isStable, bool _isFundingToken, bool _isTradingToken) external override onlyOwner{
@@ -123,6 +129,7 @@ contract Vault is IVault, Ownable {
         tBase.isStable = _isStable;
         tBase.isFundable = _isFundingToken;
         getMaxPrice(_token);// validate price feed
+        emit SetTokenConfig(_token, _tokenWeight, _isStable, _isFundingToken, _isTradingToken);
     }
 
     function clearTokenConfig(address _token, bool _del) external onlyOwner{
@@ -138,6 +145,7 @@ contract Vault is IVault, Ownable {
         } 
         if (_del)
             delete tokenBase[_token];
+        emit ClearTokenConfig(_token, del);
     }
     // the governance controlling this function should have a timelock
     function upgradeVault(address _newVault, address _token, uint256 _amount) external onlyOwner{
